@@ -8,6 +8,18 @@ from typing import Callable
 
 import paho.mqtt.client as mqtt
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Path to project root
+BASE_DIR = Path(__file__).resolve().parents[1]
+
+# Load .env from project root
+load_dotenv(BASE_DIR / ".env")
+
+MQTT_HOST = os.environ["MQTT_HOST"]
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_DEVICE_ID = os.getenv("MQTT_DEVICE_ID", "raspberry01")
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +28,8 @@ class MQTTSubscriber:
 
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 1883,
+        host: str = MQTT_HOST,
+        port: int = MQTT_PORT,
         topic: str = "devices/#",
         qos: int = 0,
         message_handler: Callable[[dict], None] | None = None,
@@ -111,8 +123,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     subscriber = MQTTSubscriber(
-        host=os.getenv("MQTT_HOST", "localhost"),
-        port=int(os.getenv("MQTT_PORT", "1883")),
+        host=MQTT_HOST,
+        port=MQTT_PORT,
     )
 
     try:
