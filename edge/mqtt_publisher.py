@@ -60,7 +60,13 @@ class MQTTPublisher:
             self.disconnect()
             raise TimeoutError("Could not connect to MQTT broker")
 
-    def publish(self, x: float, y: float, z: float) -> bool:
+    def publish(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        mode: str | None = None,
+    ) -> bool:
         if not self.connected.is_set():
             logger.warning("Not connected. Measurement dropped.")
             return False
@@ -72,6 +78,9 @@ class MQTTPublisher:
             "y": float(y),
             "z": float(z),
         }
+
+        if mode is not None:
+            data["mode"] = mode
 
         payload = json.dumps(data)
 
@@ -85,8 +94,6 @@ class MQTTPublisher:
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             logger.error("Failed to publish message")
             return False
-
-        logger.debug("Queued for publishing: %s", payload)
 
         return True
 

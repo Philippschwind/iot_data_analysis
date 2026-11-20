@@ -39,8 +39,12 @@ class DataSimulation:
 
         return np.array([x, y, z])
 
-    def read(self) -> dict:
+    def generate_sample(self, mode) -> dict:
         t = time.monotonic() - self.start_time
+
+        if mode not in ("idle", "shaking", "walking"):
+            raise ValueError(f"Invalid mode: {mode}")
+        self.mode = mode
 
         match self.mode:
             case "idle":
