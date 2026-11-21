@@ -38,6 +38,54 @@ services:
       timeout: 5s
       retries: 5
 
+  backend-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    command: >
+      uvicorn backend.api.app:app
+      --host 0.0.0.0
+      --port 8000
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    command: python -m backend.main
+
+    environment:
+      MQTT_HOST: mqtt-broker
+      MQTT_PORT: 1883
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_started
+
 volumes:
   mosquitto_data:
   postgres_data:
