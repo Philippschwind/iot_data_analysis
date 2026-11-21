@@ -5,6 +5,7 @@ import logging
 import os
 import time
 from typing import Callable
+from uuid import uuid4
 
 import paho.mqtt.client as mqtt
 
@@ -39,10 +40,11 @@ class MQTTSubscriber:
         self.topic = topic
         self.qos = qos
         self.message_handler = message_handler
+        self.client_id = f"backend-{uuid4().hex}"
 
         self.client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-            client_id="backend-subscriber",
+            client_id=self.client_id,
         )
 
         self.client.enable_logger(logger)
@@ -56,7 +58,7 @@ class MQTTSubscriber:
         self, client, userdata, flags, reason_code, properties
         ):
         if reason_code == 0:
-            logger.info("Connected to MQTT broker")
+            logger.info("Connected to MQTT broker: client_id=%s", self.client_id)
 
             result, mid = client.subscribe(self.topic, qos=self.qos)
 

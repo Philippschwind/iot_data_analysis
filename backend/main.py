@@ -1,21 +1,33 @@
+
 import logging
 import time
 
 from backend.mqtt_subscriber import MQTTSubscriber
 from backend.database.connection import Base, engine
 from backend.database.models import SensorReading
-from backend.database.repository import save_sensor_reading
+from backend.database.repository import (
+    SensorRepository,
+    SensorBatchWriter,
+)
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    # Create tables if necessary
     Base.metadata.create_all(bind=engine)
 
-    # Initialize MQTT subscriber
+    repository = SensorRepository()
+
+    batch_writer = SensorBatchWriter(
+        repository=repository,
+        batch_size=100,
+        flush_interval=5.0,
+    )
+
+    batch_writer.start()
+
     subscriber = MQTTSubscriber(
-        message_handler=save_sensor_reading,
+        message_handler=batch_writer.add,
     )
 
     try:
@@ -25,10 +37,11 @@ def main():
             time.sleep(1)
 
     except KeyboardInterrupt:
-        pass
+        print("Shutting down...")
 
     finally:
         subscriber.disconnect()
+        batch_writer.stop()
 
 
 if __name__ == "__main__":
